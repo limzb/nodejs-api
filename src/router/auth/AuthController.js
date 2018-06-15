@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import User from '../user/User';
+import VerifyToken from './VerifyToken';
 
 const AuthRouter = express.Router();
 AuthRouter.use(bodyParser.urlencoded({ extended: false }));
@@ -18,7 +19,6 @@ AuthRouter.post('/register', (req, res) => {
     },
     (err, user) => {
       if (err) {
-        console.log(err);
         return res.status(500).send('There was a problem registering the user');
       }
 
@@ -32,26 +32,21 @@ AuthRouter.post('/register', (req, res) => {
   );
 });
 
-AuthRouter.get('/user', (req, res) => {
+AuthRouter.get('/user', VerifyToken, (req, res, next) => {
   const token = req.headers['x-access-token'];
   if (!token) {
     return res.status(401).send({ auth: false, message: 'No token provided' });
   }
-  jwt.verify(token, process.env.USER_SECRET, (err, decoded) => {
-    if (err) {
-      console.log(err);
+  User.findById(req.userID, { password: 0 }, (userErr, user) => {
+    if (userErr) {
       return res
         .status(500)
-        .send({ auth: false, message: 'Failed to authenticate token' });
+        .send({
+          error: userErr,
+          message: 'There was a problem finding the user',
+        });
     }
-    // return res.status(200).send(decoded);
-    User.findById(decoded.id, { password: 0 }, (userErr, user) => {
-      if (userErr) {
-        console.log(userErr);
-        return res.status(500).send('There was a problem finding the user');
-      }
-      return res.status(200).send(user);
-    });
+    res.status(200).send(user);
   });
 });
 
