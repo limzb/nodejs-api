@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:server": "del .\\.build && webpack --config webpack.config.js"
+    "start": "del .\\.build && webpack --config webpack.config.js"
   },
   "author": "",
   "license": "ISC",
@@ -22,9 +22,14 @@
     "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
+    "bcrypt": "^2.0.1",
+    "body-parser": "^1.18.3",
+    "dotenv-webpack": "^1.5.7",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.9.1",
-    "express": "^4.16.3"
+    "express": "^4.16.3",
+    "jsonwebtoken": "^8.3.0",
+    "mongoose": "^5.1.5"
   }
 }
