@@ -2,8 +2,10 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import User from '../user/User';
+import User from '../../models/User/User';
+import { findUserByID } from '../../models/User/UserController';
 import VerifyToken from './VerifyToken';
+import asyncMiddleware from '../../middleware/asyncMiddleware';
 
 const AuthRouter = express.Router();
 AuthRouter.use(bodyParser.urlencoded({ extended: false }));
@@ -19,7 +21,13 @@ AuthRouter.post('/register', (req, res) => {
     },
     (err, user) => {
       if (err) {
-        return res.status(500).send('There was a problem registering the user');
+        console.log(err);
+        const errorMessage =
+          err.code === 11000 ? 'User already exist.' : 'Something is wrong!';
+        if (err.code === 11000) {
+          return res.status(400).send(errorMessage);
+        }
+        return res.status(500).send(errorMessage);
       }
 
       // create a token
@@ -32,23 +40,23 @@ AuthRouter.post('/register', (req, res) => {
   );
 });
 
-AuthRouter.get('/user', VerifyToken, (req, res, next) => {
-  const token = req.headers['x-access-token'];
-  if (!token) {
-    return res.status(401).send({ auth: false, message: 'No token provided' });
-  }
-  User.findById(req.userID, { password: 0 }, (userErr, user) => {
-    if (userErr) {
+AuthRouter.get(
+  '/user',
+  VerifyToken,
+  asyncMiddleware(async (req, res, next) => {
+    const token = req.headers['x-access-token'];
+    if (!token) {
       return res
-        .status(500)
-        .send({
-          error: userErr,
-          message: 'There was a problem finding the user',
-        });
+        .status(401)
+        .send({ auth: false, message: 'No token provided' });
+    }
+    const user = await findUserByID(req.userID);
+    if (!user) {
+      res.status(404).send({ message: 'Failed to find user' });
     }
     res.status(200).send(user);
-  });
-});
+  }),
+);
 
 AuthRouter.post('/login', (req, res) => {
   User.findOne({ name: req.body.name }, (err, user) => {

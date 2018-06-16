@@ -7,7 +7,7 @@ const Dotenv = require('dotenv-webpack');
 module.exports = {
   target: 'node',
   mode: 'development',
-  entry: ['webpack/hot/poll?1000', './src/index'],
+  entry: ['babel-polyfill', 'webpack/hot/poll?1000', './src/index'],
   watch: true,
   output: {
     path: path.resolve(__dirname, '.build'),
